@@ -20,7 +20,9 @@ RUN cd cocoapi/PythonAPI && make install
 RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
 WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
-RUN pip install tqdm
+RUN tar -xf oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
+RUN rm oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar 
+RUN pip install tqdm redis
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
