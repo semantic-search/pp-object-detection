@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
 
         message = message.value
-        print("MESSAGE RECEIVED consumer_ppyolo: ")
+        print("MESSAGE RECEIVED consumer_retinanet: ")
         image_id = message['image_id']
         # data = message['data']
 
