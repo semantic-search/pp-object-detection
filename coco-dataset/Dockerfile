@@ -21,7 +21,8 @@ RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
 WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
 RUN tar -xf cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
-RUN rm cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tarRUN pip install tqdm
+RUN rm cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
+RUN pip install tqdm redis 
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
