@@ -1,6 +1,5 @@
 # !/usr/bin/python
 
-
 # {
 #   "objects": [
 #     "bottle",
@@ -25,7 +24,7 @@ from ppdet.data.reader import create_reader
 import logging
 import json
 from kafka import KafkaConsumer
-from kafka import  KafkaProducer
+from kafka import KafkaProducer
 from json import loads
 from base64 import decodestring
 import base64
@@ -33,19 +32,23 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 import uuid
+import redis
 load_dotenv()
 
 '''This code contains the kafka initialization'''
 
-TOPIC = "RETINA_NET"
+# TOPIC = "COCO_DATASET"
 
 KAFKA_HOSTNAME = os.getenv("KAFKA_HOSTNAME")
 KAFKA_PORT = os.getenv("KAFKA_PORT")
+REDIS_HOSTNAME = os.getenv("REDIS_HOSTNAME")
+REDIS_PORT = os.getenv("REDIS_PORT")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 RECEIVE_TOPIC = 'RETINA_NET'
 SEND_TOPIC_FULL = "IMAGE_RESULTS"
 SEND_TOPIC_TEXT = "TEXT"
-print("kafka : "+KAFKA_HOSTNAME+':'+KAFKA_PORT)
+print("kafka : " + KAFKA_HOSTNAME + ':' + KAFKA_PORT)
 
 import os
 import numpy as np
@@ -57,23 +60,25 @@ opt= {'weights': 'retinanet_x101_vd_64x4d_fpn_1x'}
 FORMAT = '%(asctime)s-%(levelname)s: %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
+# Redis initialize
+r = redis.StrictRedis(host=REDIS_HOSTNAME, port=REDIS_PORT,
+                      password=REDIS_PASSWORD, ssl=True)
+
+# Kafka initialize - To receive img data to process
 consumer_easyocr = KafkaConsumer(
     RECEIVE_TOPIC,
-    bootstrap_servers=[KAFKA_HOSTNAME+':'+KAFKA_PORT],
+    bootstrap_servers=[KAFKA_HOSTNAME + ':' + KAFKA_PORT],
     auto_offset_reset="earliest",
     enable_auto_commit=True,
     group_id="my-group",
     value_deserializer=lambda x: loads(x.decode("utf-8")),
 )
 
-# For Sending processed img data further 
+# For Sending processed img data further
 producer = KafkaProducer(
-    bootstrap_servers=[KAFKA_HOSTNAME+':'+KAFKA_PORT],
+    bootstrap_servers=[KAFKA_HOSTNAME + ':' + KAFKA_PORT],
     value_serializer=lambda x: json.dumps(x).encode("utf-8"),
 )
-
-
-
 
 '''This code contains of object detection'''
 cfg = load_config(config_file)
@@ -105,7 +110,7 @@ if cfg.weights:
 
 # parse infer fetches
 assert cfg.metric in ['COCO', 'VOC', 'OID', 'WIDERFACE'], \
-        "unknown metric type {}".format(cfg.metric)
+    "unknown metric type {}".format(cfg.metric)
 extra_keys = []
 if cfg['metric'] in ['COCO', 'OID']:
     extra_keys = ['im_info', 'im_id', 'im_shape']
@@ -122,6 +127,7 @@ if cfg.metric == "VOC":
     from ppdet.utils.voc_eval import bbox2out, get_category_info
 if cfg.metric == "WIDERFACE":
     from ppdet.utils.widerface_eval_utils import bbox2out, lmk2out, get_category_info
+
 
 def get_save_image_name(output_dir, image_path):
     """
@@ -141,9 +147,9 @@ def get_test_images(infer_dir, infer_img):
     assert infer_img is not None or infer_dir is not None, \
         "--infer_img or --infer_dir should be set"
     assert infer_img is None or os.path.isfile(infer_img), \
-            "{} is not a file".format(infer_img)
+        "{} is not a file".format(infer_img)
     assert infer_dir is None or os.path.isdir(infer_dir), \
-            "{} is not a directory".format(infer_dir)
+        "{} is not a directory".format(infer_dir)
 
     # infer_img has a higher priority
     if infer_img and os.path.isfile(infer_img):
@@ -165,14 +171,13 @@ def get_test_images(infer_dir, infer_img):
     return images
 
 
-
-
-
 '''
 Main predict code which takes file_name in the format of 
 file_name = "uploads/" + f.filename
 
 '''
+
+
 def predict(file_name):
     # args = upload_parser.parse_args()
     # f = args['file']
@@ -202,9 +207,9 @@ def predict(file_name):
     imid2path = dataset.get_imid2path()
     for iter_id, data in enumerate(loader()):
         outs = exe.run(infer_prog,
-                        feed=data,
-                        fetch_list=values,
-                        return_numpy=False)
+                       feed=data,
+                       fetch_list=values,
+                       return_numpy=False)
         res = {
             k: (np.array(v), v.recursive_sequence_lengths())
             for k, v in zip(keys, outs)
@@ -243,34 +248,36 @@ def predict(file_name):
     }
     os.remove(file_name)
     return response_dict
+
+
 # if __name__ == '__main__':
 #    app.run(debug=True)
 
 if __name__ == "__main__":
 
     for message in consumer_easyocr:
-        print('xxx--- inside easyocr consumer---xxx')
-        print(KAFKA_HOSTNAME+':'+KAFKA_PORT)
-
+        print('xxx--- inside open images consumer---xxx')
+        print(KAFKA_HOSTNAME + ':' + KAFKA_PORT)
 
         message = message.value
-        print("MESSAGE RECEIVED consumer_retinanet: ")
+        print("MESSAGE RECEIVED consumer_retina net: ")
         image_id = message['image_id']
         # data = message['data']
 
         # data = base64.b64decode(data.encode("ascii"))
 
-    # '''TODO: To call the predict function and pass the requried file path'''
+        # '''TODO: To call the predict function and pass the requried file path'''
 
         # folder_path = "images/PP_YOLO/"
         # Path(folder_path).mkdir(parents=True, exist_ok=True)
 
         data = message['data']
-        file_name= str(uuid.uuid4()) + ".jpg"
+        r.set(RECEIVE_TOPIC, image_id)
+        file_name = str(uuid.uuid4()) + ".jpg"
         with open(file_name, "wb") as fh:
             fh.write(base64.b64decode(data.encode("ascii")))
 
-        response_dict=predict(file_name)
+        response_dict = predict(file_name)
         '''
         From here the sending process begins
         '''
@@ -288,10 +295,10 @@ if __name__ == "__main__":
         #     cords, word, confidence = prediction
         #     text.append(word)
         #     coords.append(cords)
-            
+
         full_res["data"] = response_dict
         text_res["data"] = response_dict['objects']
-        print(text_res)
+        print(full_res)
 
         # sending full and text res(without cordinates or probability) to kafka
         producer.send(SEND_TOPIC_FULL, value=json.dumps(full_res))
