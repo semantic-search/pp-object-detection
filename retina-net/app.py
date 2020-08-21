@@ -1,4 +1,16 @@
-#!/usr/bin/python
+# !/usr/bin/python
+
+
+# {
+#   "objects": [
+#     "bottle",
+#     "person"
+#   ],
+#   "score": [
+#     0.6211097240447998,
+#     0.42280933260917664
+#   ]
+# }
 from __future__ import absolute_import, division, print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -11,23 +23,59 @@ from ppdet.utils.check import check_gpu, check_version, check_config
 import ppdet.utils.checkpoint as checkpoint
 from ppdet.data.reader import create_reader
 import logging
-from flask import Flask
-import werkzeug
-from werkzeug import secure_filename
+import json
+from kafka import KafkaConsumer
+from kafka import  KafkaProducer
+from json import loads
+from base64 import decodestring
+import base64
+from pathlib import Path
+from dotenv import load_dotenv
 import os
-from flask_restplus import Resource, Api
-from werkzeug.datastructures import FileStorage
-import numpy as np
-from PIL import Image
-from ppdet.utils.visualizer import visualize_results
+import uuid
+load_dotenv()
 
+'''This code contains the kafka initialization'''
+
+TOPIC = "RETINA_NET"
+
+KAFKA_HOSTNAME = os.getenv("KAFKA_HOSTNAME")
+KAFKA_PORT = os.getenv("KAFKA_PORT")
+
+RECEIVE_TOPIC = 'RETINA_NET'
+SEND_TOPIC_FULL = "IMAGE_RESULTS"
+SEND_TOPIC_TEXT = "TEXT"
+print("kafka : "+KAFKA_HOSTNAME+':'+KAFKA_PORT)
+
+import os
+import numpy as np
+
+'''Change this 2 lines in every object detection'''
 config_file = "configs/retinanet_x101_vd_64x4d_fpn_1x.yml"
 opt= {'weights': 'retinanet_x101_vd_64x4d_fpn_1x'}
-
+'''This code contains of Kafka precode'''
 FORMAT = '%(asctime)s-%(levelname)s: %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
+consumer_easyocr = KafkaConsumer(
+    RECEIVE_TOPIC,
+    bootstrap_servers=[KAFKA_HOSTNAME+':'+KAFKA_PORT],
+    auto_offset_reset="earliest",
+    enable_auto_commit=True,
+    group_id="my-group",
+    value_deserializer=lambda x: loads(x.decode("utf-8")),
+)
 
+# For Sending processed img data further 
+producer = KafkaProducer(
+    bootstrap_servers=[KAFKA_HOSTNAME+':'+KAFKA_PORT],
+    value_serializer=lambda x: json.dumps(x).encode("utf-8"),
+)
+
+
+
+
+'''This code contains of object detection'''
 cfg = load_config(config_file)
 merge_config(opt)
 check_config(cfg)
@@ -119,105 +167,134 @@ def get_test_images(infer_dir, infer_img):
 
 
 
-#flask
-app = Flask(__name__)
-api = Api(app, version='1.0', title='Paddle Paddle Detection',
-    description='State of the ART Retinanet on retinanet_x101 model Inference.',
-)
-ns = api.namespace('', description='Run inference for Object Detection on your image')
-app.config['UPLOAD_FOLDER'] = 'uploads'
-parser = api.parser()
-parser.add_argument('in_files', type=werkzeug.datastructures.FileStorage, location='files')
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files',
-                           type=FileStorage, required=True)
 
-@ns.route('/upload/')
-@ns.expect(upload_parser)
-class Upload(Resource):
-    def post(self):
-        args = upload_parser.parse_args()
-        f = args['file']
-        f.save(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
-        file_name = "uploads/" + f.filename
-        dataset = cfg.TestReader['dataset']
-        infer_dir = "workspace"
-        infer_img = file_name
-        test_images = get_test_images(infer_dir, infer_img)
-        dataset.set_images(test_images)
-        reader = create_reader(cfg.TestReader, devices_num=1)
-        loader.set_sample_list_generator(reader, place)
-        anno_file = dataset.get_anno()
-        with_background = dataset.with_background
-        use_default_label = dataset.use_default_label
+'''
+Main predict code which takes file_name in the format of 
+file_name = "uploads/" + f.filename
 
-        clsid2catid, catid2name = get_category_info(anno_file, with_background,
-                                                    use_default_label)
+'''
+def predict(file_name):
+    # args = upload_parser.parse_args()
+    # f = args['file']
+    # f.save(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
+    # file_name = "uploads/" + f.filename
 
-        # whether output bbox is normalized in model output layer
-        is_bbox_normalized = False
-        if hasattr(model, 'is_bbox_normalized') and \
-                callable(model.is_bbox_normalized):
-            is_bbox_normalized = model.is_bbox_normalized()
+    dataset = cfg.TestReader['dataset']
+    infer_dir = "workspace"
+    infer_img = file_name
+    test_images = get_test_images(infer_dir, infer_img)
+    dataset.set_images(test_images)
+    reader = create_reader(cfg.TestReader, devices_num=1)
+    loader.set_sample_list_generator(reader, place)
+    anno_file = dataset.get_anno()
+    with_background = dataset.with_background
+    use_default_label = dataset.use_default_label
 
-        imid2path = dataset.get_imid2path()
-        for iter_id, data in enumerate(loader()):
-            outs = exe.run(infer_prog,
-                           feed=data,
-                           fetch_list=values,
-                           return_numpy=False)
-            res = {
-                k: (np.array(v), v.recursive_sequence_lengths())
-                for k, v in zip(keys, outs)
-            }
-            logger.info('Infer iter {}'.format(iter_id))
-            if 'TTFNet' in cfg.architecture:
-                res['bbox'][1].append([len(res['bbox'][0])])
+    clsid2catid, catid2name = get_category_info(anno_file, with_background,
+                                                use_default_label)
 
-            bbox_results = None
-            mask_results = None
-            lmk_results = None
-            if 'bbox' in res:
-                bbox_results = bbox2out([res], clsid2catid, is_bbox_normalized)
-            if 'mask' in res:
-                mask_results = mask2out([res], clsid2catid,
-                                        model.mask_head.resolution)
-            if 'landmark' in res:
-                lmk_results = lmk2out([res], is_bbox_normalized)
+    # whether output bbox is normalized in model output layer
+    is_bbox_normalized = False
+    if hasattr(model, 'is_bbox_normalized') and \
+            callable(model.is_bbox_normalized):
+        is_bbox_normalized = model.is_bbox_normalized()
 
-            # visualize result
-            im_ids = res['im_id'][0]
-        for im_id in im_ids:
-            image_path = imid2path[int(im_id)]
-            image = Image.open(image_path).convert('RGB')
-            draw_threshold = 0.1
-            image = visualize_results(image,
-                                      int(im_id), catid2name,
-                                      draw_threshold, bbox_results,
-                                      mask_results, lmk_results)
-
-            output_dir = "output"
-            save_name = get_save_image_name(output_dir, image_path)
-            logger.info("Detection bbox results save in {}".format(save_name))
-            image.save(save_name, quality=95)
-
-        im_ids = res['im_id'][0]
-        objects = []
-        scores = []
-        for dt in np.array(bbox_results):
-
-            catid, bbox, score = dt['category_id'], dt['bbox'], dt['score']
-            if score > 0.1:
-                if str(catid2name[catid]) in objects:
-                    pass
-                else:
-                    objects.append(str(catid2name[catid]))
-                    scores.append(score)
-        response_dict = {
-            "objects": objects,
-            "score": scores
+    imid2path = dataset.get_imid2path()
+    for iter_id, data in enumerate(loader()):
+        outs = exe.run(infer_prog,
+                        feed=data,
+                        fetch_list=values,
+                        return_numpy=False)
+        res = {
+            k: (np.array(v), v.recursive_sequence_lengths())
+            for k, v in zip(keys, outs)
         }
-        os.remove(file_name)
-        return response_dict
-if __name__ == '__main__':
-   app.run(debug=True)
+        logger.info('Infer iter {}'.format(iter_id))
+        if 'TTFNet' in cfg.architecture:
+            res['bbox'][1].append([len(res['bbox'][0])])
+
+        bbox_results = None
+        mask_results = None
+        lmk_results = None
+        if 'bbox' in res:
+            bbox_results = bbox2out([res], clsid2catid, is_bbox_normalized)
+        if 'mask' in res:
+            mask_results = mask2out([res], clsid2catid,
+                                    model.mask_head.resolution)
+        if 'landmark' in res:
+            lmk_results = lmk2out([res], is_bbox_normalized)
+
+        # visualize result
+    im_ids = res['im_id'][0]
+    objects = []
+    scores = []
+    for dt in np.array(bbox_results):
+
+        catid, bbox, score = dt['category_id'], dt['bbox'], dt['score']
+        if score > 0.1:
+            if str(catid2name[catid]) in objects:
+                pass
+            else:
+                objects.append(str(catid2name[catid]))
+                scores.append(score)
+    response_dict = {
+        "objects": objects,
+        "score": scores
+    }
+    os.remove(file_name)
+    return response_dict
+# if __name__ == '__main__':
+#    app.run(debug=True)
+
+if __name__ == "__main__":
+
+    for message in consumer_easyocr:
+        print('xxx--- inside easyocr consumer---xxx')
+        print(KAFKA_HOSTNAME+':'+KAFKA_PORT)
+
+
+        message = message.value
+        print("MESSAGE RECEIVED consumer_ppyolo: ")
+        image_id = message['image_id']
+        # data = message['data']
+
+        # data = base64.b64decode(data.encode("ascii"))
+
+    # '''TODO: To call the predict function and pass the requried file path'''
+
+        # folder_path = "images/PP_YOLO/"
+        # Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+        data = message['data']
+        file_name= str(uuid.uuid4()) + ".jpg"
+        with open(file_name, "wb") as fh:
+            fh.write(base64.b64decode(data.encode("ascii")))
+
+        response_dict=predict(file_name)
+        '''
+        From here the sending process begins
+        '''
+        full_res = {
+            'image_id': image_id
+        }
+
+        text_res = {
+            'image_id': image_id
+        }
+
+        # text = []
+        # coords = []
+        # for idx, prediction in enumerate(predictions):
+        #     cords, word, confidence = prediction
+        #     text.append(word)
+        #     coords.append(cords)
+            
+        full_res["data"] = response_dict
+        text_res["data"] = response_dict['objects']
+        print(text_res)
+
+        # sending full and text res(without cordinates or probability) to kafka
+        producer.send(SEND_TOPIC_FULL, value=json.dumps(full_res))
+        producer.send(SEND_TOPIC_TEXT, value=json.dumps(text_res))
+
+        producer.flush()
