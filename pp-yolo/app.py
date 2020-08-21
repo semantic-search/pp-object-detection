@@ -38,7 +38,7 @@ load_dotenv()
 
 '''This code contains the kafka initialization'''
 
-TOPIC = "COCO_DATASET"
+TOPIC = "PP_YOLO"
 
 KAFKA_HOSTNAME = os.getenv("KAFKA_HOSTNAME")
 KAFKA_PORT = os.getenv("KAFKA_PORT")
@@ -46,7 +46,7 @@ REDIS_HOSTNAME = os.getenv("REDIS_HOSTNAME")
 REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
-RECEIVE_TOPIC = 'COCO_DATASET'
+RECEIVE_TOPIC = 'PP_YOLO'
 SEND_TOPIC_FULL = "IMAGE_RESULTS"
 SEND_TOPIC_TEXT = "TEXT"
 print("kafka : " + KAFKA_HOSTNAME + ':' + KAFKA_PORT)
