@@ -20,7 +20,7 @@ RUN cd cocoapi/PythonAPI && make install
 RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
 WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/ppyolo_2x.pdparams
-RUN pip install tqdm
+RUN pip install tqdm redis
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
