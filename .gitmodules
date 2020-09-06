@@ -1,0 +1,4 @@
+  
+    [submodule "db_models"]
+	path = db_models
+	url = https://github.com/semantic-search/db_models
