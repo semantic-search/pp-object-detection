@@ -20,11 +20,11 @@ RUN cd cocoapi/PythonAPI && make install
 RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
 WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/yolov4_cspdarknet_voc.pdparams
-RUN pip install tqdm redis
+RUN pip install tqdm redis mongoengine
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
 RUN mkdir workspace
 RUN apt-get -y install python-tk
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

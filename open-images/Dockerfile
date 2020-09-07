@@ -22,11 +22,11 @@ WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
 RUN tar -xf oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
 RUN rm oidv5_cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar 
-RUN pip install tqdm redis
+RUN pip install tqdm redis mongoengine
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
 RUN mkdir workspace
 RUN apt-get -y install python-tk
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

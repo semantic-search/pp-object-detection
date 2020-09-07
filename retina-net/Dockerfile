@@ -22,11 +22,11 @@ WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/retinanet_x101_vd_64x4d_fpn_1x.tar
 RUN tar -xf retinanet_x101_vd_64x4d_fpn_1x.tar
 RUN rm retinanet_x101_vd_64x4d_fpn_1x.tar
-RUN pip install tqdm redis
+RUN pip install tqdm redis mongoengine
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
 RUN mkdir workspace
 RUN apt-get -y install python-tk
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

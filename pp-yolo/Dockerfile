@@ -24,4 +24,4 @@ RUN mkdir uploads
 RUN mkdir workspace
 RUN apt-get -y install python-tk
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

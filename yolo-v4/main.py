@@ -41,7 +41,6 @@ if __name__ == "__main__":
                 "results": full_results,
                 "is_doc_type": True
             }
-            print(final_full_response)
             send_to_topic(globals.SEND_TOPIC_FULL, value_to_send_dic=final_full_response)
             init.producer_obj.flush()
         else:
@@ -51,6 +50,5 @@ if __name__ == "__main__":
                     file_to_save.write(db_object.file.read())
                 image_results = predict(file_name)
                 image_results["container_name"] = globals.RECEIVE_TOPIC
-                print(image_results)
                 send_to_topic(globals.SEND_TOPIC_FULL, value_to_send_dic=image_results)
                 init.producer_obj.flush()
