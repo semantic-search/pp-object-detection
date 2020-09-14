@@ -27,8 +27,8 @@ import os
 import numpy as np
 
 '''Change this 2 lines in every object detection'''
-config_file = "configs/yolov4/yolov4_cspdarknet_voc.yml"
-opt= {'weights': 'yolov4_cspdarknet_voc.pdparams'}
+config_file = "configs/yolov4/yolov4_cspdarknet.yml"
+opt= {'weights': 'yolov4_cspdarknet.pdparams'}
 
 
 '''This code contains of object detection'''
@@ -127,6 +127,7 @@ file_name = "uploads/" + f.filename
 '''
 
 
+
 def predict(file_name, doc=False):
     # args = upload_parser.parse_args()
     # f = args['file']
@@ -206,4 +207,6 @@ def predict(file_name, doc=False):
         }
         os.remove(file_name)
         return response_dict
+
+
 

@@ -1,3 +1,4 @@
+
 # !/usr/bin/python
 
 # {
@@ -127,7 +128,8 @@ file_name = "uploads/" + f.filename
 '''
 
 
-def predict(file_name):
+
+def predict(file_name, doc=False):
     # args = upload_parser.parse_args()
     # f = args['file']
     # f.save(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
@@ -190,12 +192,23 @@ def predict(file_name):
             else:
                 objects.append(str(catid2name[catid]))
                 scores.append(score)
-    response_dict = {
-        "objects": objects,
-        "score": scores
-    }
-    os.remove(file_name)
-    return response_dict
+    if doc:
+        response_dict = {
+            "objects": objects,
+            "score": scores
+        }
+        os.remove(file_name)
+        return response_dict
+    else:
+        response_dict = {
+            "file_name": file_name,
+            "objects": objects,
+            "score": scores,
+            "is_doc_type": False
+        }
+        os.remove(file_name)
+        return response_dict
+
 
 
 
