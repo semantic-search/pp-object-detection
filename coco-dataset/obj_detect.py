@@ -1,16 +1,4 @@
 
-# !/usr/bin/python
-
-# {
-#   "objects": [
-#     "bottle",
-#     "person"
-#   ],
-#   "score": [
-#     0.6211097240447998,
-#     0.42280933260917664
-#   ]
-# }
 from __future__ import absolute_import, division, print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -129,7 +117,7 @@ file_name = "uploads/" + f.filename
 
 
 
-def predict(file_name, doc=False):
+def predict(file_name):
     # args = upload_parser.parse_args()
     # f = args['file']
     # f.save(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
@@ -192,22 +180,14 @@ def predict(file_name, doc=False):
             else:
                 objects.append(str(catid2name[catid]))
                 scores.append(score)
-    if doc:
-        response_dict = {
-            "objects": objects,
-            "score": scores
-        }
-        os.remove(file_name)
-        return response_dict
-    else:
-        response_dict = {
-            "file_name": file_name,
-            "objects": objects,
-            "score": scores,
-            "is_doc_type": False
-        }
-        os.remove(file_name)
-        return response_dict
+
+    response_dict = {
+        "labels": objects,
+        "scores": scores
+    }
+    os.remove(file_name)
+
+    return response_dict
 
 
 
