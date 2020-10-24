@@ -14,7 +14,7 @@ RUN pip install paddlepaddle_gpu-0.0.0-cp27-cp27mu-linux_x86_64.whl
 RUN python -c "import paddle; print(paddle.__version__)"
 RUN pip install visualdl
 RUN pip install PyYAML 
-RUN pip install shapely python-dotenv kafka-python
+RUN pip install shapely
 RUN git clone https://github.com/cocodataset/cocoapi.git
 RUN cd cocoapi/PythonAPI && make install
 RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
@@ -22,7 +22,7 @@ WORKDIR PaddleDetection
 RUN wget https://paddlemodels.bj.bcebos.com/object_detection/cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
 RUN tar -xf cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
 RUN rm cascade_rcnn_cls_aware_r200_vd_fpn_dcnv2_nonlocal_softnms.tar
-RUN pip install tqdm redis mongoengine
+RUN pip install tqdm redis mongoengine requests pyfiglet kafka-python python-dotenv
 RUN python ppdet/modeling/tests/test_architectures.py 
 COPY . .
 RUN mkdir uploads
