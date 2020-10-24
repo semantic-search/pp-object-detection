@@ -9,22 +9,28 @@ import pyfiglet
 import requests
 
 global_init()
-
 def save_to_db(db_object, labels, scores):
-    print("in save")
-    print(db_object)
-    print(db_object.id)
-    db_object.labels = labels
-    db_object.scores = scores
-    db_object.save()
-
-def update_state(file):
+    try:
+        print("in save")
+        print(db_object)
+        print(db_object.id)
+        db_object.labels = labels
+        db_object.scores = scores
+        db_object.save()
+    except:
+        print("Error to save in DB")
+def update_state(file_name):
     payload = {
-        'topic_name': globals.RECEIVE_TOPIC,
-        'client_id': globals.CLIENT_ID,
-        'value': file
+        'parent_name': globals.PARENT_NAME,
+        'group_name': globals.GROUP_NAME,
+        'container_name': globals.RECEIVE_TOPIC,
+        'file_name': file_name,
+        'client_id': globals.CLIENT_ID
     }
-    requests.request("POST", globals.DASHBOARD_URL,  data=payload)
+    try:
+        requests.request("POST", globals.DASHBOARD_URL,  data=payload)
+    except:
+        print("EXCEPTION IN UPDATE STATE API CALL......")
 
 
 if __name__ == '__main__':
@@ -33,10 +39,14 @@ if __name__ == '__main__':
     print("Connected to Kafka at " + globals.KAFKA_HOSTNAME + ":" + globals.KAFKA_PORT)
     print("Kafka Consumer topic for this Container is " + globals.RECEIVE_TOPIC)
     for message in init.consumer_obj:
-        global_init()
         message = message.value
         db_key = str(message)
-        db_object = Cache.objects.get(pk=db_key)
+        print(db_key, 'db_key')
+        try:
+            db_object = Cache.objects.get(pk=db_key)
+        except:
+            print("EXCEPTION IN GET PK... continue")
+            continue
         file_name = db_object.file_name
         # init.redis_obj.set(globals.RECEIVE_TOPIC, file_name)
         print("#############################################")
@@ -55,11 +65,16 @@ if __name__ == '__main__':
                 final_labels=db_object.labels
                 final_scores=db_object.scores
                 for image in images_array:
-                    response = predict(file_name=image)
+
+                    try:
+                        response = predict(file_name=image)
+                    except:
+                        print("ERROR IN PREDICT")
+                        continue
                     # final_labels.extend(response["labels"])
                     for label,score in zip(response["labels"],response['scores']):
                         if label not in final_labels:
-                            final_labels.append(label)
+                            final_labels.append(label.strip())
                             final_scores.append(score)
                         else:
                             x = final_labels.index(label)
