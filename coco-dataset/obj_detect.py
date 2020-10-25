@@ -140,6 +140,6 @@ def predict(file_name):
         os.remove(file_name)
         return objects
     except Exception as e:
-        print(f"{e} Exception in predict")
-        ERR_LOGGER(f"{e} ERROR In predict")
+        print(e+" Exception in predict")
+        ERR_LOGGER(e+" Exception in predict")
         return ""

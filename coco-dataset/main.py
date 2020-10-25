@@ -3,7 +3,7 @@ from db_models.models.cache_model import Cache
 import uuid
 import globals
 import init
-from scene_recog_service import predict
+from obj_detect import predict
 import pyfiglet
 import requests
 from init import ERR_LOGGER
@@ -12,14 +12,16 @@ from init import ERR_LOGGER
 global_init()
 def save_to_db(db_object, labels, scores):
     try:
+        print("*****************SAVING TO DB******************************")
         print("in save")
         print(db_object)
         print(db_object.id)
         db_object.labels = labels
         db_object.scores = scores
         db_object.save()
+        print("*****************SAVED TO DB******************************")
     except Exception as e:
-        print(f"{e} ERROR IN SAVE TO DB")
+        print(e+" ERROR IN SAVE TO DB")
         ERR_LOGGER(f"{e} ERROR IN SAVE TO DB")
 def update_state(file_name):
     payload = {
@@ -32,9 +34,9 @@ def update_state(file_name):
     try:
         requests.request("POST", globals.DASHBOARD_URL,  data=payload)
     except Exception as e:
-        print("EXCEPTION IN UPDATE STATE API CALL......")
-        print(f"{e} EXCEPTION IN UPDATE STATE API CALL......")
-        ERR_LOGGER(f"{e} EXCEPTION IN UPDATE STATE API CALL......")
+
+        print(e+" EXCEPTION IN UPDATE STATE API CALL......")
+        ERR_LOGGER(e+"EXCEPTION IN UPDATE STATE API CALL......")
 
 
 if __name__ == '__main__':
@@ -49,7 +51,7 @@ if __name__ == '__main__':
         try:
             db_object = Cache.objects.get(pk=db_key)
         except:
-            print("EXCEPTION IN GET PK... continue")
+            print(e+"EXCEPTION IN GET PK... continue")
             continue
         file_name = db_object.file_name
         # init.redis_obj.set(globals.RECEIVE_TOPIC, file_name)
@@ -73,8 +75,8 @@ if __name__ == '__main__':
                     try:
                         response = predict(file_name=image)
                     except Exception as e:
-                        print(f"{e} Exception in predict")
-                        ERR_LOGGER(f"{e} Exception in predict")
+                        print( e+"Exception in predict")
+                        ERR_LOGGER(e+"Exception in predict")
                         continue
                     # final_labels.extend(response["labels"])
                     for label,score in zip(response["objects"],response['scores']):
@@ -100,8 +102,8 @@ if __name__ == '__main__':
             try:
                 image_result = predict(file_name)
             except Exception as e:
-                print(f"{e} Exception in predict")
-                ERR_LOGGER(f"{e} Exception in predict")
+                print(e+" Exception in predict")
+                ERR_LOGGER(e+" Exception in predict")
                 continue
             labels=image_result['objects']
             scores=image_result['scores']
