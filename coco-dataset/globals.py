@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
 load_dotenv()
-SEND_TOPIC_FULL = "IMAGE_RESULTS"
-SEND_TOPIC_TEXT = "TEXT"
+
 KAFKA_HOSTNAME = os.getenv("KAFKA_HOSTNAME")
 KAFKA_PORT = os.getenv("KAFKA_PORT")
 RECEIVE_TOPIC = 'COCO_DATASET'
@@ -14,7 +13,7 @@ DB = os.getenv('MONGO_DB')
 PORT = os.getenv('MONGO_PORT')
 MONGO_USER = os.getenv('MONGO_USER')
 MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
-
-
+LOGSTASH_HOSTNAME=os.getenv('LOGSTASH_HOSTNAME')
+LOGSTASH_PORT=os.getenv('LOGSTASH_PORT')
 PARENT_NAME="Image"
 GROUP_NAME="Object_Detection"

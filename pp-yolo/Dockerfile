@@ -12,7 +12,7 @@ RUN wget https://paddle-wheel.bj.bcebos.com/0.0.0-gpu-cuda10-cudnn7-mkl/paddlepa
 RUN pip install opencv-python==4.2.0.32
 RUN pip install paddlepaddle_gpu-0.0.0-cp27-cp27mu-linux_x86_64.whl
 RUN python -c "import paddle; print(paddle.__version__)"
-RUN pip install shapely python-dotenv kafka-python visualdl PyYAML tqdm redis mongoengine
+RUN pip install shapely python-dotenv kafka-python visualdl PyYAML tqdm redis mongoengine python-logstash-async
 RUN git clone https://github.com/cocodataset/cocoapi.git
 RUN cd cocoapi/PythonAPI && make install
 RUN git clone https://github.com/PaddlePaddle/PaddleDetection.git
