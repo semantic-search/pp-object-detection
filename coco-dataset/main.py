@@ -1,4 +1,3 @@
-import json
 from db_models.mongo_setup import global_init
 from db_models.models.cache_model import Cache
 import uuid
@@ -7,6 +6,8 @@ import init
 from scene_recog_service import predict
 import pyfiglet
 import requests
+from init import ERR_LOGGER
+
 
 global_init()
 def save_to_db(db_object, labels, scores):
@@ -17,8 +18,9 @@ def save_to_db(db_object, labels, scores):
         db_object.labels = labels
         db_object.scores = scores
         db_object.save()
-    except:
-        print("Error to save in DB")
+    except Exception as e:
+        print(f"{e} ERROR IN SAVE TO DB")
+        ERR_LOGGER(f"{e} ERROR IN SAVE TO DB")
 def update_state(file_name):
     payload = {
         'parent_name': globals.PARENT_NAME,
@@ -29,8 +31,10 @@ def update_state(file_name):
     }
     try:
         requests.request("POST", globals.DASHBOARD_URL,  data=payload)
-    except:
+    except Exception as e:
         print("EXCEPTION IN UPDATE STATE API CALL......")
+        print(f"{e} EXCEPTION IN UPDATE STATE API CALL......")
+        ERR_LOGGER(f"{e} EXCEPTION IN UPDATE STATE API CALL......")
 
 
 if __name__ == '__main__':
@@ -68,8 +72,9 @@ if __name__ == '__main__':
 
                     try:
                         response = predict(file_name=image)
-                    except:
-                        print("ERROR IN PREDICT")
+                    except Exception as e:
+                        print(f"{e} Exception in predict")
+                        ERR_LOGGER(f"{e} Exception in predict")
                         continue
                     # final_labels.extend(response["labels"])
                     for label,score in zip(response["labels"],response['scores']):
@@ -92,7 +97,12 @@ if __name__ == '__main__':
 
             with open(file_name, 'wb') as file_to_save:
                 file_to_save.write(db_object.file.read())
-            image_result = predict(file_name)
+            try:
+                image_result = predict(file_name)
+            except Exception as e:
+                print(f"{e} Exception in predict")
+                ERR_LOGGER(f"{e} Exception in predict")
+                continue
             labels=image_result['labels']
             scores=image_result['scores']
             save_to_db(db_object,labels,scores)
