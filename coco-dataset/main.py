@@ -101,16 +101,26 @@ if __name__ == '__main__':
             with open(file_name, 'wb') as file_to_save:
                 file_to_save.write(db_object.file.read())
             try:
+                final_labels = db_object.labels
+                final_scores = db_object.scores
                 image_result = predict(file_name)
+                for label, score in zip(image_result["labels"], image_result['scores']):
+                    if label not in final_labels:
+                        final_labels.append(label.strip())
+                        final_scores.append(score)
+                    else:
+                        x = final_labels.index(label)
+                        score_to_check = final_scores[x]
+                        if score > score_to_check:
+                            final_scores[x] = score
+
+
+                save_to_db(db_object, final_labels, final_scores)
+                print(".....................FINISHED PROCESSING FILE.....................")
+                update_state(file_name)
             except Exception as e:
                 print(str(e)+" Exception in predict")
                 ERR_LOGGER(str(e)+" Exception in predict")
 
-                continue
-            print(image_result)
-            labels=image_result['objects']
-            scores=image_result['score']
-            save_to_db(db_object,labels,scores)
-            print(".....................FINISHED PROCESSING FILE.....................")
-            update_state(file_name)
+                
 

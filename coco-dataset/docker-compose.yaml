@@ -1,10 +1,9 @@
-
 version: '3'
 services:
   api:
     image: jainal09/pp-detection:coco
-    # ports:
-      # - "80:80"
+    ports:
+      - '7000:5000'
   kafka-consumer:
     build:
       context: ./
