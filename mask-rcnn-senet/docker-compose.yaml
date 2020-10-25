@@ -1,0 +1,17 @@
+version: '3'
+services:
+  api:
+    image: jainal09/pp-detection:mask-rcnn-senet
+    ports:
+      - '7000:5000'
+  kafka-consumer:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    command: python -u main.py
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - api

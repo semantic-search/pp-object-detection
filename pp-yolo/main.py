@@ -1,24 +1,28 @@
-import json
 from db_models.mongo_setup import global_init
 from db_models.models.cache_model import Cache
 import uuid
 import globals
 import init
-from scene_recog_service import predict
+from obj_detect import predict
 import pyfiglet
 import requests
+from init import ERR_LOGGER
+
 
 global_init()
 def save_to_db(db_object, labels, scores):
     try:
+        print("*****************SAVING TO DB******************************")
         print("in save")
         print(db_object)
         print(db_object.id)
         db_object.labels = labels
         db_object.scores = scores
         db_object.save()
-    except:
-        print("Error to save in DB")
+        print("*****************SAVED TO DB******************************")
+    except Exception as e:
+        print(" ERROR IN SAVE TO DB")
+        ERR_LOGGER(str(e)+" ERROR IN SAVE TO DB")
 def update_state(file_name):
     payload = {
         'parent_name': globals.PARENT_NAME,
@@ -29,8 +33,10 @@ def update_state(file_name):
     }
     try:
         requests.request("POST", globals.DASHBOARD_URL,  data=payload)
-    except:
-        print("EXCEPTION IN UPDATE STATE API CALL......")
+    except Exception as e:
+
+        print(" EXCEPTION IN UPDATE STATE API CALL......")
+        ERR_LOGGER(str(e)+"EXCEPTION IN UPDATE STATE API CALL......")
 
 
 if __name__ == '__main__':
@@ -44,8 +50,9 @@ if __name__ == '__main__':
         print(db_key, 'db_key')
         try:
             db_object = Cache.objects.get(pk=db_key)
-        except:
-            print("EXCEPTION IN GET PK... continue")
+        except Exception as e:
+            print("EXCEPTION IN UPDATE STATE API CALL......")
+            ERR_LOGGER(str(e)+" EXCEPTION IN UPDATE STATE API CALL......FILE ID {FILE_ID}")
             continue
         file_name = db_object.file_name
         # init.redis_obj.set(globals.RECEIVE_TOPIC, file_name)
@@ -68,11 +75,12 @@ if __name__ == '__main__':
 
                     try:
                         response = predict(file_name=image)
-                    except:
-                        print("ERROR IN PREDICT")
+                    except Exception as e:
+                        print(str(e)+"Exception in predict")
+                        ERR_LOGGER(str(e)+"Exception in predict")
                         continue
                     # final_labels.extend(response["labels"])
-                    for label,score in zip(response["labels"],response['scores']):
+                    for label,score in zip(response["objects"],response['score']):
                         if label not in final_labels:
                             final_labels.append(label.strip())
                             final_scores.append(score)
@@ -92,9 +100,27 @@ if __name__ == '__main__':
 
             with open(file_name, 'wb') as file_to_save:
                 file_to_save.write(db_object.file.read())
-            image_result = predict(file_name)
-            labels=image_result['labels']
-            scores=image_result['scores']
-            save_to_db(db_object,labels,scores)
-            print(".....................FINISHED PROCESSING FILE.....................")
-            update_state(file_name)
+            try:
+                final_labels = db_object.labels
+                final_scores = db_object.scores
+                image_result = predict(file_name)
+                for label, score in zip(image_result["objects"], image_result['score']):
+                    if label not in final_labels:
+                        final_labels.append(label.strip())
+                        final_scores.append(score)
+                    else:
+                        x = final_labels.index(label)
+                        score_to_check = final_scores[x]
+                        if score > score_to_check:
+                            final_scores[x] = score
+
+
+                save_to_db(db_object, final_labels, final_scores)
+                print(".....................FINISHED PROCESSING FILE.....................")
+                update_state(file_name)
+            except Exception as e:
+                print(str(e)+" Exception in predict")
+                ERR_LOGGER(str(e)+" Exception in predict")
+
+
+
