@@ -3,3 +3,4 @@ kafka-python
 mongoengine
 requests
 python-logstash-async
+pyfiglet

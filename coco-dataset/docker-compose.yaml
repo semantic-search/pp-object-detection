@@ -2,7 +2,7 @@
 version: '3'
 services:
   api:
-    image: jainal09/pp-detection:coco:api
+    image: jainal09/pp-detection:coco
     # ports:
       # - "80:80"
   kafka-consumer:

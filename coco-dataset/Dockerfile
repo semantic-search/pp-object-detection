@@ -1,4 +1,4 @@
-FROM jainal09/pp-detection:coco
+FROM python:3.7
 
 # Set the locale
 ENV LANG=C.UTF-8

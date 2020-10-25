@@ -28,3 +28,18 @@ def predict(file_name):
         print(str(e)+"Exception in predict")
         ERR_LOGGER(str(e)+" Exception in predict")
         return ""
+
+
+import requests
+import json
+with open('test_image/sehore.jpg', 'rb') as f:
+    read_data = f.read()
+
+files = {
+    'file': read_data,
+}
+
+response = requests.post('http://api:5000/upload/', files=files)
+data = response.content.decode()
+data = json.loads(data)
+print(data, type(data))
