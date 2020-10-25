@@ -4,8 +4,6 @@ import requests
 import os
 import json
 def object_api(file_name):
-
-
     with open(file_name, 'rb') as f:
         read_data = f.read()
     files = {

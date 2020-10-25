@@ -103,9 +103,9 @@ if __name__ == '__main__':
             try:
                 image_result = predict(file_name)
             except Exception as e:
-                # print(str(e)+" Exception in predict")
-                # ERR_LOGGER(str(e)+" Exception in predict")
-                print('ji')
+                print(str(e)+" Exception in predict")
+                ERR_LOGGER(str(e)+" Exception in predict")
+
                 continue
             print(image_result)
             labels=image_result['objects']
