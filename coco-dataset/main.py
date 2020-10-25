@@ -77,7 +77,7 @@ if __name__ == '__main__':
                         ERR_LOGGER(f"{e} Exception in predict")
                         continue
                     # final_labels.extend(response["labels"])
-                    for label,score in zip(response["labels"],response['scores']):
+                    for label,score in zip(response["objects"],response['scores']):
                         if label not in final_labels:
                             final_labels.append(label.strip())
                             final_scores.append(score)
