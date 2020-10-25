@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 print(f"{e} Exception in predict")
                 ERR_LOGGER(f"{e} Exception in predict")
                 continue
-            labels=image_result['labels']
+            labels=image_result['objects']
             scores=image_result['scores']
             save_to_db(db_object,labels,scores)
             print(".....................FINISHED PROCESSING FILE.....................")
