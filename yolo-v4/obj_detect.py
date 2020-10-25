@@ -1,15 +1,5 @@
 # !/usr/bin/python
 
-# {
-#   "objects": [
-#     "bottle",
-#     "person"
-#   ],
-#   "score": [
-#     0.6211097240447998,
-#     0.42280933260917664
-#   ]
-# }
 from __future__ import absolute_import, division, print_function
 from __future__ import absolute_import
 from __future__ import division

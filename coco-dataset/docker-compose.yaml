@@ -1,0 +1,18 @@
+
+version: '3'
+services:
+  api:
+    image: jainal09/pp-detection:coco:api
+    # ports:
+      # - "80:80"
+  kafka-consumer:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    command: python -u main.py
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - api
