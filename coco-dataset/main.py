@@ -22,7 +22,7 @@ def save_to_db(db_object, labels, scores):
         print("*****************SAVED TO DB******************************")
     except Exception as e:
         print(e+" ERROR IN SAVE TO DB")
-        ERR_LOGGER(f"{e} ERROR IN SAVE TO DB")
+        ERR_LOGGER(e+" ERROR IN SAVE TO DB")
 def update_state(file_name):
     payload = {
         'parent_name': globals.PARENT_NAME,
