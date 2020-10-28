@@ -10,6 +10,6 @@
 ```
 
 ## Images used
-ghcr.io/semantic-search/max-caption-org:latest
+ghcr.io/semantic-search/pp-object-detection:mask-rcnn-senet-api
 
-ghcr.io/semantic-search/max-caption-consumer:latest
+ghcr.io/semantic-search/pp-object-detection:mask-rcnn
