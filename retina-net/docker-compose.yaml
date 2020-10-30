@@ -1,14 +1,15 @@
 version: '3'
 services:
   api:
-    image: retina-net
+    image: retina-net-api
     ports:
-      - '7000:5000'
+      - '5000'
   kafka-consumer:
     build:
       context: ./
       dockerfile: ./Dockerfile
-    command: python -u main.py
+    command: >
+      sh -c "/app/wait-for-it.sh api:80 -- python -u main.py"
     env_file:
       - .env
     volumes:

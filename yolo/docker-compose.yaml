@@ -3,12 +3,13 @@ services:
   api:
     image: jainal09/pp-detection:yolov4-voc
     ports:
-      - '7000:5000'
+      - '5000'
   kafka-consumer:
     build:
       context: ./
       dockerfile: ./Dockerfile
-    command: python -u main.py
+    command: >
+      sh -c "/app/wait-for-it.sh api:80 -- python -u main.py"
     env_file:
       - .env
     volumes:

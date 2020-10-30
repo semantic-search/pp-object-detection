@@ -11,5 +11,6 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 COPY . /app
+RUN chmod +rwx wait-for-it.sh
 
 # CMD ["python", "-u", "main.py"]
